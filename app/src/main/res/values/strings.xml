@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Mitra AI Android</string>
+    <string name="msg_welcome">Welcome to Mitra AI Android</string>
+    <string name="accessibility_service_description">
+Automates screen interactions using AI
+</string>
+</resources>
