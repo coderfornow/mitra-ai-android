@@ -1,71 +1,75 @@
 # Mitra AI Android
 
-Mitra AI Android is an application leveraging Android’s AccessibilityService to capture on-screen UI data, send it (along with user goals) to a backend orchestrator powered by AI/LLMs, and automatically trigger interactions in other apps (taps, text entries, scrolling, etc.). 
+Mitra AI Android leverages Android’s AccessibilityService to capture on-screen UI data, send it (along with user goals) to a backend orchestrator powered by AI/LLMs, and automatically trigger interactions in other apps (taps, text fields, scrolling, etc.).
 
---------------------------------------------------------------------------------
+---
+
 ## Table of Contents
-1. Overview  
-2. Features  
-3. Architecture  
-4. Getting Started  
-5. Building & Running  
-6. Usage Flow  
-7. Configuration  
-8. Troubleshooting & Tips  
-9. License  
+- [Overview](#overview)  
+- [Features](#features)  
+- [Architecture](#architecture)  
+- [Getting Started](#getting-started)  
+- [Building & Running](#building--running)  
+- [Usage Flow](#usage-flow)  
+- [Configuration](#configuration)  
+- [Troubleshooting & Tips](#troubleshooting--tips)  
+- [License](#license)
 
---------------------------------------------------------------------------------
-## 1. Overview
-Mitra AI Android implements a “Sense–Think–Act” loop:  
-- Sense: The app’s AccessibilityService collects real-time UI context from whatever is on-screen.  
-- Think: Collected context is sent to a backend orchestrator (e.g., a GPT-powered service) to determine a plan of actions.  
-- Act: Mitra AI executes the returned actions (clicking buttons, filling text, etc.) automatically on the device.
+---
 
-This approach allows you to automate app interactions, helping users accomplish tasks across different apps with minimal manual effort.
+## Overview
+Mitra AI Android implements a “Sense–Think–Act” cycle:
+1. **Sense**: A custom AccessibilityService collects real-time UI context from any foreground app.  
+2. **Think**: This context, plus a user’s goal, is sent to a backend AI orchestrator (e.g., GPT-based) that determines the best step-by-step actions.  
+3. **Act**: The app automatically executes these instructions through Accessibility, performing clicks, text filling, or scrolling.
 
---------------------------------------------------------------------------------
-## 2. Features
-- Custom AccessibilityService  
-  - Listens for UI changes across the device’s foreground apps.  
-  - Aggregates label, text, resource ID information for each visible element.
+This model offers powerful automation to help users perform complex tasks across apps with minimal manual effort.
 
-- Network Orchestrator Integration (HTTP/Retrofit)  
-  - Sends screen data and user goals to the “Mitra Backend” or other orchestrator service.  
-  - Receives structured JSON instructions representing the next steps to perform.
+---
 
-- Automatic UI Actions  
-  - Programmatically taps buttons, fills text, or scrolls to specific elements—replicating user behavior.
+## Features
+- **Custom AccessibilityService**:  
+  - Subscribes to UI events (window changes, clicks).  
+  - Gathers resource IDs, text content, node hierarchies.
 
-- Clean Project Structure  
-  - Accessibility logic is isolated in MyAccessibilityService.  
-  - Networking logic is handled in OrchestratorApi.  
-  - Data models (ScreenElement, Step Instructions) kept in data/.
+- **Orchestrator API Integration**:  
+  - Communicates with the “Mitra Backend” or another LLM-based service.  
+  - Sends screen context and user goals in JSON. Receives structured instructions in return.
 
---------------------------------------------------------------------------------
-## 3. Architecture
+- **Automated UI Actions**:  
+  - Taps, text fills, scrolling—executed without manual user interaction.  
+  - Ideal for hands-free tasks or advanced automation flows.
 
+- **Modular Project Structure**:  
+  - Accessibility logic in MyAccessibilityService.  
+  - Networking in OrchestratorApi.  
+  - Data models (ScreenElement, etc.) in data/.
+
+---
+
+## Architecture
 ```mermaid
 flowchart LR
-    A(User Goal & Screen) --> B(MyAccessibilityService)
-    B -->|Collect UI Data| D[AccessibilityOrchestrator]
-    D -->|Send screen context\n+ user goal to backend| E(Mitra Backend LLM)
-    E -->|Returns step-by-step JSON| D
-    D -->|Perform actions on device| B
+    A(User) --> B(MyAccessibilityService)
+    B -->|Collect screen data| D[AccessibilityOrchestrator]
+    D -->|HTTP call to orchestrator| E(Mitra Backend)
+    E -->|Returns step-based plan| D
+    D -->|Perform actions\nvia Accessibility| B
 ```
 
-1. (A) The user navigates within any app or enters a high-level goal in Mitra AI Android.  
-2. (B) MyAccessibilityService “senses” the screen’s UI elements.  
-3. (D) AccessibilityOrchestrator packages screen elements + user goal → calls the backend.  
-4. (E) The Mitra backend (powered by GPT or another LLM) returns step-by-step actions.  
-5. The app “acts” on these actions via Accessibility (clicking buttons, filling text, etc.).
+- (A) The user interacts with or navigates to a target app.  
+- (B) MyAccessibilityService observes the UI changes.  
+- (D) It then sends the observed data and user goal to the Mitra Backend (E).  
+- (E) The backend returns structured actions.  
+- (D) The app executes them on-screen via Accessibility actions (click, fill, etc.).
 
---------------------------------------------------------------------------------
-## 4. Getting Started
+---
 
+## Getting Started
 ### Prerequisites
-- Android Studio (Arctic Fox or newer).  
-- An Android device or emulator (API level 21+).  
-- A backend orchestrator service (e.g., Mitra Backend) that processes screen context and returns a plan.
+- Android Studio (Arctic Fox or newer recommended).  
+- An Android device or emulator running at least API 21+.  
+- A functioning orchestrator backend (e.g., “Mitra Backend”) that can receive screen data + user goals, then return automation instructions.
 
 ### Repository Structure
 ```
@@ -82,19 +86,17 @@ MitraAIAndroid/
 │       ├── main/
 │       │   ├── AndroidManifest.xml
 │       │   ├── java/
-│       │   │   └── com/
-│       │   │       └── example/
-│       │   │           └── mitraaiapp/
-│       │   │               ├── MainActivity.kt
-│       │   │               ├── network/
-│       │   │               │   └── OrchestratorApi.kt
-│       │   │               ├── accessibility/
-│       │   │               │   ├── MyAccessibilityService.kt
-│       │   │               │   └── AccessibilityOrchestrator.kt
-│       │   │               ├── data/
-│       │   │               │   └── ScreenContext.kt
-│       │   │               ├── ui/ (optional)
-│       │   │               └── util/ (optional)
+│       │   │   └── com/example/mitraaiapp/
+│       │   │       ├── MainActivity.kt
+│       │   │       ├── network/
+│       │   │       │   └── OrchestratorApi.kt
+│       │   │       ├── accessibility/
+│       │   │       │   ├── MyAccessibilityService.kt
+│       │   │       │   └── AccessibilityOrchestrator.kt
+│       │   │       ├── data/
+│       │   │       │   └── ScreenContext.kt
+│       │   │       ├── ui/ (optional features/UI)
+│       │   │       └── util/ (utils/helpers)
 │       │   └── res/
 │       │       ├── layout/
 │       │       ├── xml/
@@ -105,11 +107,11 @@ MitraAIAndroid/
 └── ...
 ```
 
---------------------------------------------------------------------------------
-## 5. Building & Running
+---
 
-1. **Clone This Repository**  
-   ```
+## Building & Running
+1. **Clone the Repo**  
+   ```bash
    git clone https://github.com/YourOrg/MitraAIAndroid.git
    cd MitraAIAndroid
    ```
@@ -117,79 +119,85 @@ MitraAIAndroid/
 2. **Open in Android Studio**  
    - File → Open → select MitraAIAndroid folder.
 
-3. **Configure Orchestrator URL**  
-   - In OrchestratorApi.kt, set the BASE_URL to your Mitra Backend’s endpoint.
+3. **Configure the Orchestrator URL**  
+   - In OrchestratorApi.kt, set the BASE_URL to point to your Mitra Backend environment.
 
 4. **Build & Run**  
-   - Use Android Studio’s “Run” button to build and deploy the app on an emulator or device.  
-   - Alternatively, from terminal:  
-     ```
-     ./gradlew assembleDebug
-     ./gradlew installDebug
-     ```
-
---------------------------------------------------------------------------------
-## 6. Usage Flow
-
-1. **User Installs & Opens Mitra AI Android**  
-   - The app may prompt for user’s high-level goal or might rely on prompts in the backend.
-
-2. **Grant Accessibility Permission**  
-   - Go to “Settings → Accessibility → Mitra AI Android” and enable.  
-   - This permission is crucial to receive UI events.
-
-3. **Automated Interaction**  
-   - As the user navigates in any other app, MyAccessibilityService collects the visible UI elements.  
-   - The service sends the data along with the user’s intended goal to the Mitra backend.  
-   - The backend returns a sequence of actions:
-     ```json
-     {
-       "steps": [
-         { "action": "tap",  "target": { "resource_id": "search_button" } },
-         { "action": "fill", "target": { "resource_id": "from_input", "text": "NYC" } },
-         ...
-       ]
-     }
-     ```
-   - Mitra AI Android executes these actions on the screen, effectively automating the workflow.
-
---------------------------------------------------------------------------------
-## 7. Configuration
-
-- **Accessibility Service**  
-  - `accessibility_service_config.xml` defines event types, feedback type, etc.  
-  - **MyAccessibilityService.kt**: the main entry point for receiving UI events and performing actions.
-
-- **Network**  
-  - `OrchestratorApi.kt` uses Retrofit (or another HTTP client) to communicate with the orchestrator.  
-  - Update the `BASE_URL` to match your environment (development, staging, production).
-
-- **Build Variants**  
-  - You can create multiple build flavors for different environments (e.g., dev vs. prod) in your `app/build.gradle`.
-
---------------------------------------------------------------------------------
-## 8. Troubleshooting & Tips
-
-- **Accessibility Not Triggering**  
-  - Make sure the service is Enabled. If in doubt, re-check “Accessibility → Mitra AI Android → Enable.”
-
-- **Resource ID/Views Not Found**  
-  - Some apps do not expose resource IDs or text. Investigate alternative matching methods (by text, contentDescription, etc.).
-
-- **Advanced AI Logic**  
-  - If your orchestrator sends complex step sequences or requires user input at certain steps, handle partial automation, then re-sense the screen.
-
-- **User Privacy & Security**  
-  - Accessibility can see potentially sensitive data. Explain clearly in your privacy policy. Handle data responsibly.
-
-- **Investigate Logs**  
-  - Use Logcat to watch for AccessibilityEvent logs. Confirm your service sees the events and can act on them.
-
---------------------------------------------------------------------------------
-## 9. License
-
-[MIT License](./LICENSE) (or your chosen license). Under this license, you are free to modify, distribute, and use this code, subject to any obligations stated in the LICENSE file.
+   - Use Android Studio’s “Run” button or:
+   ```bash
+   ./gradlew assembleDebug
+   ./gradlew installDebug
+   ```
 
 ---
 
-Mitra AI Android – bridging the power of AI with Android Accessibility to deliver seamless app automation and user-friendly experiences. Enjoy developing and extending the possibilities!
+## Usage Flow
+1. **Enable Accessibility**  
+   - On your device: Settings → Accessibility → Mitra AI Android → toggle on.
+
+2. **Initiate a Task**  
+   - The user might provide a goal like “Book a flight from NYC to London.”  
+   - Alternatively, Mitra AI might detect a change in the current app to infer user intent.
+
+3. **Screen Data Collection**  
+   - MyAccessibilityService gathers the visible UI elements—resource IDs, text fields, etc.
+
+4. **Send to Backend**  
+   - The “AccessibilityOrchestrator” compiles screen data + user goal → calls the orchestrator API.
+
+5. **Receive Action Steps**  
+   - Example JSON from the backend:
+     ```json
+     {
+       "steps": [
+         { "action": "fill", "target": { "resource_id": "from_input", "text": "NYC" } },
+         { "action": "fill", "target": { "resource_id": "to_input", "text": "London" } },
+         { "action": "tap", "target": { "resource_id": "search_button" } }
+       ]
+     }
+     ```
+   - Mitra AI Android executes each step via Accessibility actions on the target app.
+
+---
+
+## Configuration
+- **Accessibility Service**  
+  - Declared in `accessibility_service_config.xml` and `MyAccessibilityService.kt`.  
+  - `android:accessibilityEventTypes` can define which events you track (click, window changes, etc.).
+
+- **HTTP Networking**  
+  - OrchestratorApi uses Retrofit (or any HTTP client of your choice).  
+  - For advanced usage, add interceptors, logging, or authentication tokens.
+
+- **Build Variants**  
+  - You can create multiple productFlavors (dev/prod) for different backend endpoints in `app/build.gradle`.
+
+---
+
+## Troubleshooting & Tips
+- **Service Not Triggering?**  
+  - Confirm Accessibility is enabled. Check logs for any initialization errors.
+
+- **Elements Not Found**  
+  - Some apps do not expose resource IDs. Use text matching or content descriptions as a fallback.
+
+- **Large or Dynamic UIs**  
+  - Performance may degrade if you re-scan the entire view hierarchy frequently. Optimize or filter out unneeded views.
+
+- **User Privacy & Security**  
+  - Accessibility can read private information. Provide disclaimers and handle data securely.
+
+- **Logcat Debugging**  
+  - Insert logs in `onAccessibilityEvent()` and your network calls to see real-time activity.  
+
+---
+
+## License
+Use any license that fits your project. For example:  
+[MIT License](./LICENSE)
+
+You are free to modify, distribute, and use the code, subject to the License terms.
+
+---
+
+Mitra AI Android – supercharging app interactions through Accessibility, AI-driven planning, and hands-free automation. Enjoy developing and extending the power of Mitra! 
